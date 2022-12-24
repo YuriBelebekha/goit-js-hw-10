@@ -5,13 +5,13 @@ import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
 const debounce = require('lodash.debounce');
 const DEBOUNCE_DELAY = 300;
-const minValueOfCountries = 2;
-const maxValueOfCountries = 10;
+const minNumberOfCountries = 2;
+const maxNumberOfCountries = 10;
 
 const refs = {
   searchBox: document.querySelector('#search-box'),
-  listCountry: document.querySelector('.country-list'),
   infoCountry: document.querySelector('.country-info'),
+  listCountry: document.querySelector('.country-list'),  
 };
 
 refs.searchBox.addEventListener('input', debounce(onSearchBoxInput, DEBOUNCE_DELAY));
@@ -19,48 +19,84 @@ refs.searchBox.addEventListener('input', debounce(onSearchBoxInput, DEBOUNCE_DEL
 function onSearchBoxInput(e) {
   e.preventDefault();
   
-  let normalizedSearchInput = refs.searchBox.value.trim();
+  const normalizedSearchInput = refs.searchBox.value.trim();
 
   fetchCountries(normalizedSearchInput)
-    .then(data => {
-      // console.log(data);
-      // if (normalizedSearchInput === '') {
-      //   clearMarkup();
-      //   return;
-      // };
-
+    .then(data => {      
       if(data.length === 1) {
         Notify.success('One country found.');
-        console.log(data) // stopped here!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         
-        // return data;
+        clearMarkupCountryList();        
+        createMarkupForCountryInfo(data);        
+        return;
       };
 
-      if(data.length >= minValueOfCountries && data.length <= maxValueOfCountries) {
+      if(data.length >= minNumberOfCountries && data.length <= maxNumberOfCountries) {
         Notify.success(`${data.length} countries found.`);
-        // return data;
+        
+        clearMarkupCountryInfo();        
+        createMarkupForCountryList(data);        
+        return;
       };      
       
-      if(data.length > maxValueOfCountries) {
+      if(data.length > maxNumberOfCountries) {
         Notify.info('Too many matches found. Please enter a more specific name.');
+
+        clearMarkupCountryList();
+        clearMarkupCountryInfo();
       };  
     })
-    .catch(error => Notify.failure('Oops, there is no country with that name'));  
-
+    .catch(error => {
+      Notify.failure('Oops, there is no country with that name');
+      
+      clearMarkupCountryList();
+      clearMarkupCountryInfo();      
+    });
 }
 
-function createMarkupForCountryInfo() {
+function createMarkupForCountryList(countries) {
+  const markup = countries.map(country => `
+    <li class="country-list_item">
+      <img class="country-list__item-img" src="${country.flags.svg}" alt="${country.name.official} flag" width='40' height='30'>
+      <h2 class="country-list__item-name">${country.name.official}</h2>
+    </li>
+  `).join('');
 
+  refs.listCountry.innerHTML = ('beforeend', markup);
 };
 
-function createMarkupForCountryList() {
-
+// У Republic of South Africa & State of Palestine декілька столиць, тому додав метод join(', ') до country.capital
+function createMarkupForCountryInfo(countries) {
+  
+  const markup = countries.map(country => `      
+      <div class="country-info__box">
+        <div class="country-info__title">
+          <img class="country-info__img" src="${country.flags.svg}" alt="${country.name.official} flag" width='60' height="40">
+          <h2 class="country-info__name">
+            ${country.name.official}
+          </h2>
+        </div>
+        <div class="country-info__description">        
+          <p class="country-info__capital">
+            <span>Capital:</span> ${country.capital.join(', ')}
+          </p>
+          <p class="country-info__population">
+            <span>Population:</span> ${country.population}
+          </p>
+          <p class="country-info__languages">
+            <span>Languages:</span> ${Object.values(country.languages).join(', ')}
+          </p>
+        </div>
+      </div>  
+    `).join('');  
+  
+  refs.infoCountry.innerHTML = ('beforeend', markup);
 };
 
-function clearMarkup() {
-  refs.infoCountry.innerHTML = '';
+function clearMarkupCountryList() {
   refs.listCountry.innerHTML = '';
 }
 
-
- 
+function clearMarkupCountryInfo() {
+  refs.infoCountry.innerHTML = '';  
+}
