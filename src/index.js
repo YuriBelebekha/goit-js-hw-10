@@ -21,37 +21,45 @@ function onSearchBoxInput(e) {
   
   const normalizedSearchInput = refs.searchBox.value.trim();
 
-  fetchCountries(normalizedSearchInput)
-    .then(data => {      
-      if(data.length === 1) {
-        Notify.success('One country found.');
+  if (normalizedSearchInput === '') {
+    clearMarkupCountryList();
+    clearMarkupCountryInfo();    
+    
+    Notify.info('Please enter country name.');
+    return;
+  } else {
+    fetchCountries(normalizedSearchInput)
+      .then(data => {
+        if (data.length === 1) {
+          Notify.success('One country found.');
         
-        clearMarkupCountryList();        
-        createMarkupForCountryInfo(data);        
-        return;
-      };
+          clearMarkupCountryList();
+          createMarkupForCountryInfo(data);
+          return;
+        };
 
-      if(data.length >= minNumberOfCountries && data.length <= maxNumberOfCountries) {
-        Notify.success(`${data.length} countries found.`);
+        if (data.length >= minNumberOfCountries && data.length <= maxNumberOfCountries) {
+          Notify.success(`${data.length} countries found.`);
         
-        clearMarkupCountryInfo();        
-        createMarkupForCountryList(data);        
-        return;
-      };      
+          clearMarkupCountryInfo();
+          createMarkupForCountryList(data);
+          return;
+        };
       
-      if(data.length > maxNumberOfCountries) {
-        Notify.info('Too many matches found. Please enter a more specific name.');
+        if (data.length > maxNumberOfCountries) {
+          Notify.info('Too many matches found. Please enter a more specific name.');
 
+          clearMarkupCountryList();
+          clearMarkupCountryInfo();
+        };
+      })
+      .catch(() => {
+        Notify.failure('Oops, there is no country with that name');
+      
         clearMarkupCountryList();
         clearMarkupCountryInfo();
-      };  
-    })
-    .catch(error => {
-      Notify.failure('Oops, there is no country with that name');
-      
-      clearMarkupCountryList();
-      clearMarkupCountryInfo();      
-    });
+      });
+  }
 }
 
 function createMarkupForCountryList(countries) {
